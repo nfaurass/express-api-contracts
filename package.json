@@ -1,0 +1,55 @@
+{
+  "name": "express-api-contracts",
+  "version": "1.0.0",
+  "description": "Type-safe Express APIs with zero boilerplate.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "",
+    "dev": "",
+    "test": "",
+    "lint": "",
+    "lint:fix": "",
+    "prepublishOnly": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nfaurass/express-api-contracts.git"
+  },
+  "keywords": [
+    "express",
+    "typescript",
+    "zod",
+    "api",
+    "contract",
+    "validation",
+    "type-safe",
+    "openapi",
+    "swagger",
+    "rest",
+    "dx"
+  ],
+  "author": "nfaurass",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nfaurass/express-api-contracts/issues"
+  },
+  "homepage": "https://github.com/nfaurass/express-api-contracts#readme",
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  },
+  "peerDependencies": {
+    "express": "^4.17.1",
+    "zod": "^3.0.0"
+  }
+}
