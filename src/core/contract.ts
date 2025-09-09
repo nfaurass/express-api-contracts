@@ -1,4 +1,5 @@
 import {ZodType, infer as ZInfer, ZodObject} from "zod";
+import {MiddlewareContract} from "./middleware";
 
 // Request Types
 export type RequestMethod = "post" | "put" | "patch" | "delete" | "get";
@@ -12,8 +13,8 @@ type RequestSchema<B extends ZodType, H extends ZodType, Q extends ZodType> = {
 };
 
 // Response Types
-export type ResponseSchema<R extends { [K in number]: ZodType }> = R;
-export type ResponseUnion<R extends ResponseSchema<any>> = {
+type ResponseSchema<R extends { [K in number]: ZodType }> = R;
+type ResponseUnion<R extends ResponseSchema<any>> = {
     [K in keyof R & number]: { status: K; body: ZInfer<R[K]> };
 }[keyof R & number];
 
@@ -24,6 +25,7 @@ export interface Contract<B extends ZodType = ZodObject, H extends ZodType = Zod
     method: RequestMethod;
     request?: RequestSchema<B, H, Q>;
     responses: ResponseSchema<R>;
+    middlewares?: MiddlewareContract[];
     handler: (args: {
         body: BodyType<B> extends undefined ? undefined : BodyType<B>;
         headers: HeadersType<H> extends undefined ? undefined : HeadersType<H>;

@@ -1,6 +1,7 @@
-import {Express, Request, Response} from "express";
+import {Express, Request, RequestHandler, Response} from "express";
 import {Contract, RequestMethod} from "../core/contract";
 import {ZodError} from 'zod';
+import {useMiddleware} from "./use";
 
 const registeredContractsMap = new WeakMap<Express, Set<string>>();
 
@@ -20,8 +21,10 @@ export function registerContracts<Contracts extends readonly Contract<any, any, 
         }
         registered.add(key);
 
+        const middlewares = contract.middlewares?.map(useMiddleware) ?? [];
+
         const method = contract.method.toLowerCase() as RequestMethod;
-        (app as any)[method](contract.path, async (req: Request, res: Response) => {
+        (app as any)[method](contract.path, ...(middlewares || []), async (req: Request, res: Response) => {
             try {
                 // Validate request body, headers, and query
                 const body = contract.request?.body ? contract.request.body.safeParse(req.body) : undefined;
