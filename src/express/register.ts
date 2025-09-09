@@ -33,9 +33,16 @@ export function registerContracts<Contracts extends readonly Contract<any, any, 
                 if (headers && !headers.success) throw headers.error;
                 const query = contract.request?.query ? contract.request.query.safeParse(req.query) : undefined;
                 if (query && !query.success) throw query.error;
+                const params = contract.request?.params ? contract.request.params.safeParse(req.params) : undefined;
+                if (params && !params.success) throw params.error;
 
                 // Call handler
-                const result = await contract.handler({body: body?.data, headers: headers?.data, query: query?.data});
+                const result = await contract.handler({
+                    body: body?.data,
+                    headers: headers?.data,
+                    query: query?.data,
+                    params: params?.data
+                });
                 if (!result || !result.status) throw new Error("Handler did not return a valid response object with 'status'");
 
                 // Validate response
