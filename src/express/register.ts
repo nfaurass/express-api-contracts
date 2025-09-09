@@ -53,6 +53,5 @@ export function registerContracts<Contracts extends readonly Contract<any, any, 
                 return res.status(400).json({error: err instanceof Error ? err.message : String(err)});
             }
         });
-        console.log(`Registered: [${contract.method}] ${contract.path}`);
     }
 }
