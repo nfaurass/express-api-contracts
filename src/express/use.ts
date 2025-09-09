@@ -21,6 +21,7 @@ export function useMiddleware<Middleware extends MiddlewareContract<any, any, an
                 query: query?.data,
                 context: {},
                 req,
+                res,
                 next: {
                     success: (ctx?) => {
                         finished = true;

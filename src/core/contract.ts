@@ -1,5 +1,6 @@
 import {ZodType, infer as ZInfer, ZodObject} from "zod";
 import {MiddlewareContract} from "./middleware";
+import {Request, Response} from "express";
 
 // Request Types
 export type RequestMethod = "post" | "put" | "patch" | "delete" | "get";
@@ -29,6 +30,8 @@ export interface Contract<B extends ZodType = ZodObject, H extends ZodType = Zod
     responses: ResponseSchema<R>;
     middlewares?: MiddlewareContract[];
     handler: (args: {
+        req: Request;
+        res: Response;
         body: BodyType<B> extends undefined ? undefined : BodyType<B>;
         headers: HeadersType<H> extends undefined ? undefined : HeadersType<H>;
         query: QueryType<Q> extends undefined ? undefined : QueryType<Q>;

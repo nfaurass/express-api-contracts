@@ -1,4 +1,4 @@
-import {Express, Request, RequestHandler, Response} from "express";
+import {Express, Request, Response} from "express";
 import {Contract, RequestMethod} from "../core/contract";
 import {ZodError} from 'zod';
 import {useMiddleware} from "./use";
@@ -26,13 +26,17 @@ export function registerContracts<Contracts extends readonly Contract<any, any, 
         const method = contract.method.toLowerCase() as RequestMethod;
         (app as any)[method](contract.path, ...(middlewares || []), async (req: Request, res: Response) => {
             try {
-                // Validate request body, headers, and query
+                // Validate request
+                // Body
                 const body = contract.request?.body ? contract.request.body.safeParse(req.body) : undefined;
                 if (body && !body.success) throw body.error;
+                // Headers
                 const headers = contract.request?.headers ? contract.request.headers.safeParse(req.headers) : undefined;
                 if (headers && !headers.success) throw headers.error;
+                // Query
                 const query = contract.request?.query ? contract.request.query.safeParse(req.query) : undefined;
                 if (query && !query.success) throw query.error;
+                // Params
                 const params = contract.request?.params ? contract.request.params.safeParse(req.params) : undefined;
                 if (params && !params.success) throw params.error;
 
@@ -41,7 +45,9 @@ export function registerContracts<Contracts extends readonly Contract<any, any, 
                     body: body?.data,
                     headers: headers?.data,
                     query: query?.data,
-                    params: params?.data
+                    params: params?.data,
+                    req,
+                    res
                 });
                 if (!result || !result.status) throw new Error("Handler did not return a valid response object with 'status'");
 

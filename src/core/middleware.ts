@@ -1,5 +1,5 @@
 import {ZodType, infer as ZInfer, ZodObject} from "zod";
-import {Request} from "express";
+import {Request, Response} from "express";
 
 // Request Types
 type BodyType<B extends ZodType | undefined> = B extends ZodType ? ZInfer<B> : undefined;
@@ -24,6 +24,7 @@ export interface MiddlewareContract<B extends ZodType = ZodObject, H extends Zod
         query: QueryType<Q> extends undefined ? undefined : QueryType<Q>;
         context: C;
         req: Request;
+        res: Response;
         next: {
             success: (context?: Partial<C>) => void;
             error: (status: number, body: unknown) => void;
