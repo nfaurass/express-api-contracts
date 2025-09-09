@@ -2,10 +2,18 @@ import {Express, Request, Response} from "express";
 import {Contract, RequestMethod} from "../core/contract";
 import {ZodError} from 'zod';
 
+const registeredContractsMap = new WeakMap<Express, Set<string>>();
+
 export function registerContracts<Contracts extends readonly Contract<any, any, any, any>[]>(app: Express, contracts: Contracts) {
-    const registered = new Set<string>(); // Track "METHOD:PATH" to avoid duplicates
+    // Track registered routes
+    let registered = registeredContractsMap.get(app);
+    if (!registered) {
+        registered = new Set<string>();
+        registeredContractsMap.set(app, registered);
+    }
+
     for (const contract of contracts) {
-        const key = `${contract.method.toUpperCase()}:${contract.path}`;
+        const key = `${contract.method}:${contract.path}`;
         if (registered.has(key)) {
             console.warn(`[Warning] Contract already registered for [${contract.method}] ${contract.path}. Skipping duplicate.`);
             continue;
