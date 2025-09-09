@@ -12,7 +12,7 @@ const authMiddlewareContract = createMiddleware({
         }),
     },
     handler: ({headers, next}) => {
-        if (!headers || headers.authorization !== "Bearer ABC123") return next.error(401, {error: "Unauthorized"});
+        if (headers.authorization !== "Bearer ABC123") return next.error(401, {error: "Unauthorized"});
         next.success({userId: 1});
     },
 });
@@ -29,16 +29,11 @@ const getProfileContract = createContract({
     path: "/profile",
     method: "get",
     middlewares: [loggerMiddlewareContract, authMiddlewareContract],
-    request: {
-        headers: z.object({
-            authorization: z.string()
-        })
-    },
     responses: {
         200: z.object({id: z.number(), name: z.string()}),
         401: z.object({error: z.string()}),
     },
-    handler: () => {
+    handler: ({}) => {
         return {status: 200, body: {id: 1, name: "Alice"}};
     },
 });
