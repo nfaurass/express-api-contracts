@@ -6,7 +6,6 @@ Stop juggling separate validation files, untyped route handlers, and out-of-date
 lets you define everything about your API endpoint in one single, type-safe object.
 
 [![NPM version](https://img.shields.io/npm/v/express-api-contracts.svg)](https://www.npmjs.com/package/express-api-contracts)
-[![Build Status](https://img.shields.io/travis/com/nfaurass/express-api-contracts.svg)](https://travis-ci.com/nfaurass/express-api-contracts)
 
 ---
 
