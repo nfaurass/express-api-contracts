@@ -16,6 +16,27 @@ const getUserContract = createContract({
     handler: async ({}) => ({status: 200, body: {id: 1, name: "Name"}})
 });
 
+const paramsContract = createContract({
+    name: "getUserById",
+    path: "/users/:userId/post/:postId/comment/:commentId",
+    method: "get",
+    request: {
+        // params are strings by default
+        params: z.object({
+            userId: z.coerce.number(),
+            postId: z.coerce.number(),
+            commentId: z.coerce.number(),
+        })
+    },
+    responses: {
+        200: z.object({userId: z.number(), postId: z.number(), commentId: z.number()}),
+    },
+    handler: async ({params}) => ({
+        status: 200,
+        body: {userId: params.userId, postId: params.postId, commentId: params.commentId}
+    })
+});
+
 const createUserContract = createContract({
     name: "createUser",
     path: "/users",
@@ -39,7 +60,14 @@ const createUserContract = createContract({
 describe('Contract', () => {
     const app = express();
     app.use(express.json());
-    registerContracts(app, [getUserContract, createUserContract]);
+    registerContracts(app, [getUserContract, createUserContract, paramsContract]);
+
+    it('should return 200 and the params for GET /users/3/post/10/comment/494', async () => {
+        const res = await request(app).get('/users/3/post/10/comment/494');
+        console.log(res.body);
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({userId: 3, postId: 10, commentId: 494});
+    });
 
     it('should return 200 and valid response for GET /users', async () => {
         const res = await request(app).get('/users');
