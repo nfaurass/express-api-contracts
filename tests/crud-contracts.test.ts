@@ -88,14 +88,14 @@ const deleteUserContract = createContract({
         params: z.object({id: z.coerce.number()}),
     },
     responses: {
-        204: z.object(),
+        204: null,
         404: z.object({error: z.string()}),
     },
     handler: async ({params}) => {
         const index = users.findIndex(u => u.id === params.id);
         if (index === -1) return {status: 404, body: {error: 'User not found'}};
         users.splice(index, 1);
-        return {status: 204, body: {}};
+        return {status: 204};
     },
 });
 
