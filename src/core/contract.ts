@@ -16,10 +16,13 @@ type RequestSchema<BODY extends ZodObject<any>, HEADERS extends ZodObject<any>, 
 };
 
 // Response Types
-type ResponseSchemaItem = ZodObject<any> | ZodArray<ZodObject<any>>;
+type ResponseSchemaItem = ZodObject<any> | ZodArray<ZodObject<any>> | null;
 type ResponseSchema<RESPONSE extends { [KEY in number]: ResponseSchemaItem }> = RESPONSE;
 type ResponseUnion<RESPONSE extends ResponseSchema<any>> = {
-    [KEY in keyof RESPONSE & number]: { status: KEY; body: ZInfer<RESPONSE[KEY]> };
+    [KEY in keyof RESPONSE & number]: RESPONSE[KEY] extends null ? { status: KEY } : {
+        status: KEY;
+        body: ZInfer<NonNullable<RESPONSE[KEY]>>
+    };
 }[keyof RESPONSE & number];
 
 // Context
