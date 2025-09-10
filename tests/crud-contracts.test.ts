@@ -1,8 +1,7 @@
 import {describe, it, expect} from 'vitest';
 import express from 'express';
 import request from 'supertest';
-import {createContract} from '../src/core/contract';
-import {registerContracts} from '../src/express/register';
+import {createContract, registerContracts} from '../src';
 import {z} from 'zod';
 
 // In-memory "database"
@@ -89,14 +88,14 @@ const deleteUserContract = createContract({
         params: z.object({id: z.coerce.number()}),
     },
     responses: {
-        204: z.any(),
+        204: z.object(),
         404: z.object({error: z.string()}),
     },
     handler: async ({params}) => {
         const index = users.findIndex(u => u.id === params.id);
         if (index === -1) return {status: 404, body: {error: 'User not found'}};
         users.splice(index, 1);
-        return {status: 204, body: null};
+        return {status: 204, body: {}};
     },
 });
 
