@@ -1,6 +1,6 @@
 import {Express, Request, Response} from "express";
 import {Contract, RequestMethod} from "../core/contract";
-import {ZodError} from 'zod';
+import {ZodError, ZodIssue} from 'zod';
 import {useMiddleware} from "./use";
 
 const registeredContractsMap = new WeakMap<Express, Set<string>>();
@@ -26,47 +26,87 @@ export function registerContracts<Contracts extends readonly Contract<any, any, 
         const method = contract.method.toLowerCase() as RequestMethod;
         (app as any)[method](contract.path, ...(middlewares || []), async (req: Request, res: Response) => {
             try {
+                // Track errors
+                const errors: { path: string; message: string }[] = [];
+
                 // Validate request
                 // Body
-                const body = contract.request?.body ? contract.request.body.safeParse(req.body) : undefined;
-                if (body && !body.success) throw body.error;
+                if (contract.request?.body) {
+                    const bodyResult = contract.request.body.safeParse(req.body);
+                    if (!bodyResult.success) {
+                        errors.push(...bodyResult.error.issues.map((i: ZodIssue) => ({
+                            path: `body.${i.path.join(".")}`,
+                            message: i.message
+                        })));
+                    }
+                }
                 // Headers
-                const headers = contract.request?.headers ? contract.request.headers.safeParse(req.headers) : undefined;
-                if (headers && !headers.success) throw headers.error;
+                if (contract.request?.headers) {
+                    const headersResult = contract.request.headers.safeParse(req.headers);
+                    if (!headersResult.success) {
+                        errors.push(...headersResult.error.issues.map((i: ZodIssue) => ({
+                            path: `headers.${i.path.join(".")}`,
+                            message: i.message
+                        })));
+                    }
+                }
                 // Query
-                const query = contract.request?.query ? contract.request.query.safeParse(req.query) : undefined;
-                if (query && !query.success) throw query.error;
+                if (contract.request?.query) {
+                    const queryResult = contract.request.query.safeParse(req.query);
+                    if (!queryResult.success) {
+                        errors.push(...queryResult.error.issues.map((i: ZodIssue) => ({
+                            path: `query.${i.path.join(".")}`,
+                            message: i.message
+                        })));
+                    }
+                }
                 // Params
-                const params = contract.request?.params ? contract.request.params.safeParse(req.params) : undefined;
-                if (params && !params.success) throw params.error;
+                if (contract.request?.params) {
+                    const paramsResult = contract.request.params.safeParse(req.params);
+                    if (!paramsResult.success) {
+                        errors.push(...paramsResult.error.issues.map((i: ZodIssue) => ({
+                            path: `params.${i.path.join(".")}`,
+                            message: i.message
+                        })));
+                    }
+                }
+
+                // Throw on errors
+                if (errors.length > 0) {
+                    return res.status(400).json({errors});
+                }
 
                 // Call handler
-                const result = await contract.handler({
-                    body: body?.data,
-                    headers: headers?.data,
-                    query: query?.data,
-                    params: params?.data,
-                    req,
-                    res
-                });
+                const body = contract.request?.body?.safeParse(req.body)?.data;
+                const headers = contract.request?.headers?.safeParse(req.headers)?.data;
+                const query = contract.request?.query?.safeParse(req.query)?.data;
+                const params = contract.request?.params?.safeParse(req.params)?.data;
+                const result = await contract.handler({body, headers, query, params, req, res});
                 if (!result || !result.status) throw new Error("Handler did not return a valid response object with 'status'");
 
                 // Validate response
                 const schema = contract.responses[result.status];
                 if (!schema) throw new Error(`No schema defined for status ${result.status}`);
                 const validatedBody = schema.safeParse(result.body);
-                if (validatedBody && !validatedBody.success) throw validatedBody.error;
+                if (validatedBody && !validatedBody.success) {
+                    return res.status(500).json({
+                        errors: validatedBody.error.issues.map(i => ({
+                            path: `response.${i.path.join(".")}`,
+                            message: i.message
+                        }))
+                    });
+                }
 
                 return res.status(result.status).json(validatedBody?.data || {});
             } catch (err: unknown) {
                 // Return validation or handler errors
-                if (err instanceof ZodError) return res.status(400).json({
-                    errors: err.issues.map(i => ({
+                if (err instanceof ZodError) return res.status(500).json({
+                    errors: err.issues.map((i: ZodIssue) => ({
                         path: i.path.join("."),
                         message: i.message
                     }))
                 });
-                return res.status(400).json({error: err instanceof Error ? err.message : String(err)});
+                return res.status(500).json({error: err instanceof Error ? err.message : String(err)});
             }
         });
     }
