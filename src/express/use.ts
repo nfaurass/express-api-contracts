@@ -1,4 +1,4 @@
-import {ZodError} from "zod";
+import {ZodError, ZodIssue} from "zod";
 import {MiddlewareContract} from "../core/middleware";
 import {NextFunction, Request, RequestHandler, Response} from "express";
 
@@ -6,30 +6,63 @@ export function useMiddleware<Middleware extends MiddlewareContract<any, any, an
     return async (req: Request, res: Response, next: NextFunction) => {
         let finished = false;
         try {
-            // Validate request body, headers, query
-            const body = middleware.request?.body ? middleware.request.body.safeParse(req.body) : undefined;
-            if (body && !body.success) throw body.error;
-            const rawHeaders = Object.fromEntries(Object.entries(req.headers).map(([k, v]) => [k.toLowerCase(), v]));
-            const headers = middleware.request?.headers ? middleware.request.headers.safeParse(rawHeaders) : undefined;
-            if (headers && !headers.success) throw headers.error;
-            const query = middleware.request?.query ? middleware.request.query.safeParse(req.query) : undefined;
-            if (query && !query.success) throw query.error;
+            // Track errors
+            const errors: { path: string; message: string }[] = [];
 
-            // Middleware Safe handler
+            // Validate request
+            // Body
+            if (middleware.request?.body) {
+                const bodyResult = middleware.request.body.safeParse(req.body);
+                if (!bodyResult.success) {
+                    errors.push(...bodyResult.error.issues.map((i: ZodIssue) => ({
+                        path: `body.${i.path.join(".")}`,
+                        message: i.message
+                    })));
+                }
+            }
+            // Headers
+            if (middleware.request?.headers) {
+                const headersResult = middleware.request.headers.safeParse(req.headers);
+                if (!headersResult.success) {
+                    errors.push(...headersResult.error.issues.map((i: ZodIssue) => ({
+                        path: `headers.${i.path.join(".")}`,
+                        message: i.message
+                    })));
+                }
+            }
+            // Query
+            if (middleware.request?.query) {
+                const queryResult = middleware.request.query.safeParse(req.query);
+                if (!queryResult.success) {
+                    errors.push(...queryResult.error.issues.map((i: ZodIssue) => ({
+                        path: `query.${i.path.join(".")}`,
+                        message: i.message
+                    })));
+                }
+            }
+
+            // Throw on errors
+            if (errors.length > 0) {
+                return res.status(400).json({errors});
+            }
+            
+            const body = middleware.request?.body?.safeParse(req.body)?.data;
+            const headers = middleware.request?.headers?.safeParse(req.headers)?.data;
+            const query = middleware.request?.query?.safeParse(req.query)?.data;
             const safeHandler = async () => {
                 try {
                     await middleware.handler({
-                        body: body?.data,
-                        headers: headers?.data,
-                        query: query?.data,
-                        context: {},
+                        body: body,
+                        headers: headers,
+                        query: query,
+                        context: (req as any).context ?? {},
                         req,
                         res,
                         next: {
                             success: (ctx?) => {
                                 try {
                                     finished = true;
-                                    Object.assign(req, {middlewareContext: ctx || {}});
+                                    (req as any).context = {...(req as any).context, ...(ctx || {})};
                                     next();
                                 } catch (err) {
                                     const errorMessage = err instanceof Error ? err.message : "Internal Server Error";

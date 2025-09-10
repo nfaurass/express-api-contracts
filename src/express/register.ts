@@ -5,7 +5,7 @@ import {useMiddleware} from "./use";
 
 const registeredContractsMap = new WeakMap<Express, Set<string>>();
 
-export function registerContracts<Contracts extends readonly Contract<any, any, any, any>[]>(app: Express, contracts: Contracts) {
+export function registerContracts<Contracts extends readonly Contract<any, any, any, any, any>[]>(app: Express, contracts: Contracts) {
     // Track registered routes
     let registered = registeredContractsMap.get(app);
     if (!registered) {
@@ -81,7 +81,15 @@ export function registerContracts<Contracts extends readonly Contract<any, any, 
                 const headers = contract.request?.headers?.safeParse(req.headers)?.data;
                 const query = contract.request?.query?.safeParse(req.query)?.data;
                 const params = contract.request?.params?.safeParse(req.params)?.data;
-                const result = await contract.handler({body, headers, query, params, req, res});
+                const result = await contract.handler({
+                    body,
+                    headers,
+                    query,
+                    params,
+                    req,
+                    res,
+                    context: (req as any).context ?? {}
+                });
                 if (!result || !result.status) throw new Error("Handler did not return a valid response object with 'status'");
 
                 // Validate response
@@ -90,7 +98,7 @@ export function registerContracts<Contracts extends readonly Contract<any, any, 
                 const validatedBody = schema.safeParse(result.body);
                 if (validatedBody && !validatedBody.success) {
                     return res.status(500).json({
-                        errors: validatedBody.error.issues.map(i => ({
+                        errors: validatedBody.error.issues.map((i: ZodIssue) => ({
                             path: `response.${i.path.join(".")}`,
                             message: i.message
                         }))
