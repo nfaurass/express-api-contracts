@@ -85,7 +85,7 @@ describe("Error Handling Contracts", () => {
     it("should return 400 for missing headers", async () => {
         const res = await request(app).post("/validate").send({});
         expect(res.status).toBe(400);
-        expect(res.body.errors[0].path).toBe("authorization");
+        expect(res.body.errors[0].path).toBe("headers.authorization");
         expect(res.body.errors[0].message).toContain("Invalid input");
     });
 
@@ -126,8 +126,8 @@ describe("Error Handling Contracts", () => {
         const res = await request(tempApp).post("/multi-validate").send({foo: 123});
         expect(res.status).toBe(400);
         const paths = res.body.errors.map((e: any) => e.path);
-        expect(paths).toContain("foo");
-        expect(paths).toContain("bar");
+        expect(paths).toContain("body.foo");
+        expect(paths).toContain("body.bar");
     });
 
     it("should handle unexpected runtime errors in handler", async () => {
