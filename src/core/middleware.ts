@@ -1,38 +1,37 @@
-import {ZodType, infer as ZInfer, ZodObject} from "zod";
+import {infer as ZInfer, ZodObject} from "zod";
 import {Request, Response} from "express";
 
 // Request Types
-type BodyType<BODY extends ZodType | undefined> = BODY extends ZodType ? ZInfer<BODY> : undefined;
-type HeadersType<HEADERS extends ZodType | undefined> = HEADERS extends ZodType ? ZInfer<HEADERS> : undefined;
-type QueryType<QUERY extends ZodType | undefined> = QUERY extends ZodType ? ZInfer<QUERY> : undefined;
-export type RequestSchema<BODY extends ZodType, HEADERS extends ZodType, QUERY extends ZodType> = {
+type BodyType<BODY extends ZodObject<any> | undefined> = BODY extends ZodObject<any> ? ZInfer<BODY> : undefined;
+type HeadersType<HEADERS extends ZodObject<any> | undefined> = HEADERS extends ZodObject<any> ? ZInfer<HEADERS> : undefined;
+type QueryType<QUERY extends ZodObject<any> | undefined> = QUERY extends ZodObject<any> ? ZInfer<QUERY> : undefined;
+type ContextType<CONTEXT extends ZodObject<any> | undefined> = CONTEXT extends ZodObject<any> ? ZInfer<CONTEXT> : undefined;
+export type RequestSchema<BODY extends ZodObject<any> = ZodObject<any>, HEADERS extends ZodObject<any> = ZodObject<any>, QUERY extends ZodObject<any> = ZodObject<any>> = {
     body?: BODY;
     headers?: HEADERS;
     query?: QUERY;
 };
 
-// Middleware Context
-export type MiddlewareContext = Record<string, unknown>;
-
 // Middleware Contract Interface
-export interface MiddlewareContract<BODY extends ZodType = ZodObject, HEADERS extends ZodType = ZodObject, QUERY extends ZodType = ZodObject, CONTEXT extends MiddlewareContext = MiddlewareContext> {
+export interface MiddlewareContract<BODY extends ZodObject<any> = ZodObject<any>, HEADERS extends ZodObject<any> = ZodObject<any>, QUERY extends ZodObject<any> = ZodObject<any>, CONTEXT extends ZodObject<any> = ZodObject<any>> {
     name?: string;
     request?: RequestSchema<BODY, HEADERS, QUERY>;
+    provides?: CONTEXT;
     handler: (args: {
-        body: BodyType<BODY> extends undefined ? undefined : BodyType<BODY>;
-        headers: HeadersType<HEADERS> extends undefined ? undefined : HeadersType<HEADERS>;
-        query: QueryType<QUERY> extends undefined ? undefined : QueryType<QUERY>;
-        context: CONTEXT;
+        body: BodyType<BODY>;
+        headers: HeadersType<HEADERS>;
+        query: QueryType<QUERY>;
+        context: ContextType<CONTEXT>;
         req: Request;
         res: Response;
         next: {
-            success: (context?: Partial<CONTEXT>) => void;
+            success: (context?: Partial<ContextType<CONTEXT>>) => void;
             error: (status: number, body: unknown) => void;
         };
     }) => void | Promise<void>;
 }
 
 // Middleware Creator
-export function createMiddleware<BODY extends ZodType = ZodObject, HEADERS extends ZodType = ZodObject, QUERY extends ZodType = ZodObject, CONTEXT extends MiddlewareContext = MiddlewareContext>(middleware: MiddlewareContract<BODY, HEADERS, QUERY, CONTEXT>) {
+export function createMiddleware<BODY extends ZodObject<any> = ZodObject<any>, HEADERS extends ZodObject<any> = ZodObject<any>, QUERY extends ZodObject<any> = ZodObject<any>, CONTEXT extends ZodObject<any> = ZodObject<any>>(middleware: MiddlewareContract<BODY, HEADERS, QUERY, CONTEXT>) {
     return middleware;
 }
