@@ -19,7 +19,7 @@ function sanitizeSchema(schema: any) {
 }
 
 // OpenAPI Generator
-export function generateOpenApi<Contracts extends readonly Contract<any, any, any, any>[]>(contracts: Contracts, metadata: OpenApiMetadata): unknown {
+export function generateOpenApi<Contracts extends readonly Contract<any, any, any, any, any, any>[]>(contracts: Contracts, metadata: OpenApiMetadata): unknown {
     const paths: Record<string, any> = {};
 
     for (const contract of contracts) {
