@@ -17,7 +17,7 @@ const listUsersContract = createContract({
     path: '/users',
     method: 'get',
     responses: {
-        200: z.array(z.object({id: z.number(), name: z.string(), email: z.string()})),
+        200: z.array(z.object({id: z.number(), name: z.string(), email: z.email()})),
     },
     handler: async () => ({status: 200, body: users}),
 });
@@ -31,7 +31,7 @@ const getUserContract = createContract({
         params: z.object({id: z.coerce.number()}),
     },
     responses: {
-        200: z.object({id: z.number(), name: z.string(), email: z.string()}),
+        200: z.object({id: z.number(), name: z.string(), email: z.email()}),
         404: z.object({error: z.string()}),
     },
     handler: async ({params}) => {
@@ -47,10 +47,10 @@ const createUserContract = createContract({
     path: '/users',
     method: 'post',
     request: {
-        body: z.object({name: z.string(), email: z.string().email()}),
+        body: z.object({name: z.string(), email: z.email()}),
     },
     responses: {
-        201: z.object({id: z.number(), name: z.string(), email: z.string()}),
+        201: z.object({id: z.number(), name: z.string(), email: z.email()}),
     },
     handler: async ({body}) => {
         const newUser = {id: users.length + 1, ...body};
@@ -66,10 +66,10 @@ const updateUserContract = createContract({
     method: 'put',
     request: {
         params: z.object({id: z.coerce.number()}),
-        body: z.object({name: z.string().optional(), email: z.string().email().optional()}),
+        body: z.object({name: z.string().optional(), email: z.email().optional()}),
     },
     responses: {
-        200: z.object({id: z.number(), name: z.string(), email: z.string()}),
+        200: z.object({id: z.number(), name: z.string(), email: z.email()}),
         404: z.object({error: z.string()}),
     },
     handler: async ({params, body}) => {
@@ -103,13 +103,7 @@ const deleteUserContract = createContract({
 describe('User CRUD Contracts', () => {
     const app = express();
     app.use(express.json());
-    registerContracts(app, [
-        listUsersContract,
-        getUserContract,
-        createUserContract,
-        updateUserContract,
-        deleteUserContract,
-    ]);
+    registerContracts(app, [listUsersContract, getUserContract, createUserContract, updateUserContract, deleteUserContract]);
 
     it('should list all users', async () => {
         const res = await request(app).get('/users');

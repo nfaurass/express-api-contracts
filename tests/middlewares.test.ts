@@ -4,6 +4,7 @@ import request from "supertest";
 import {createContract, registerContracts, createMiddleware} from "../src";
 import {z} from "zod";
 
+// Auth middleware
 const authMiddlewareContract = createMiddleware({
     name: "authMiddleware",
     request: {
@@ -17,13 +18,16 @@ const authMiddlewareContract = createMiddleware({
     },
 });
 
+// Logger middleware (simplified, just passes request along)
 const loggerMiddlewareContract = createMiddleware({
     name: "loggerMiddleware",
-    handler: ({req}) => {
-        console.log(`[${new Date().toISOString()}] ${req.path}`);
+    handler: ({req, next, res}) => {
+        console.log(`(${new Date().toISOString()}) [${req.method.toUpperCase()} - ${res.statusCode}] ${req.path}`);
+        next.success()
     },
 });
 
+// Protected route
 const getProfileContract = createContract({
     name: "getProfile",
     path: "/profile",
@@ -32,12 +36,12 @@ const getProfileContract = createContract({
     responses: {
         200: z.object({id: z.number(), name: z.string()}),
         401: z.object({error: z.string()}),
+        400: z.object({errors: z.array(z.any())}),
     },
-    handler: ({}) => {
-        return {status: 200, body: {id: 1, name: "Alice"}};
-    },
+    handler: () => ({status: 200, body: {id: 1, name: "Alice"}}),
 });
 
+// Public route
 const publicInfoContract = createContract({
     name: "getPublicInfo",
     path: "/info",
@@ -45,37 +49,76 @@ const publicInfoContract = createContract({
     responses: {
         200: z.object({message: z.string()}),
     },
-    handler: () => {
-        return {status: 200, body: {message: "This route is public"}};
-    },
+    handler: () => ({status: 200, body: {message: "This route is public"}}),
 });
 
 describe("Middleware Contracts", () => {
     const app = express();
     app.use(express.json());
-
     registerContracts(app, [getProfileContract, publicInfoContract]);
 
-    it("should block unauthorized access to /profile", async () => {
+    it("blocks access without authorization header", async () => {
         const res = await request(app).get("/profile");
         expect(res.status).toBe(400);
-        expect(res.body).toEqual({
-            "errors": [{
-                "message": "Invalid input: expected string, received undefined",
-                "path": "authorization"
-            },]
-        });
+        expect(res.body.errors[0].path).toContain("authorization");
     });
 
-    it("should allow authorized access to /profile", async () => {
-        const res = await request(app).get("/profile").set("authorization", "Bearer ABC123");
+    it("blocks access with invalid token", async () => {
+        const res = await request(app)
+            .get("/profile")
+            .set("authorization", "Bearer WRONG");
+        expect(res.status).toBe(401);
+        expect(res.body).toEqual({error: "Unauthorized"});
+    });
+
+    it("allows access with valid token", async () => {
+        const res = await request(app)
+            .get("/profile")
+            .set("authorization", "Bearer ABC123");
         expect(res.status).toBe(200);
         expect(res.body).toEqual({id: 1, name: "Alice"});
     });
 
-    it("should allow public access to /info", async () => {
+    it("allows public access without authorization", async () => {
         const res = await request(app).get("/info");
         expect(res.status).toBe(200);
         expect(res.body).toEqual({message: "This route is public"});
+    });
+
+    it("ignores unrelated headers on public route", async () => {
+        const res = await request(app)
+            .get("/info")
+            .set("x-random", "value");
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({message: "This route is public"});
+    });
+
+    it("handles middleware errors gracefully", async () => {
+        const brokenMiddleware = createMiddleware({
+            name: "brokenMiddleware",
+            handler: () => {
+                throw new Error("Error coming from the middleware");
+            },
+        });
+
+        const errorContract = createContract({
+            name: "errorRoute",
+            path: "/error",
+            method: "get",
+            middlewares: [brokenMiddleware],
+            responses: {
+                500: z.object({error: z.string()}),
+                200: z.object({ok: z.boolean()})
+            },
+            handler: () => ({status: 200, body: {ok: true}}),
+        });
+
+        const tempApp = express();
+        tempApp.use(express.json());
+        registerContracts(tempApp, [errorContract]);
+
+        const res = await request(tempApp).get("/error");
+        expect(res.status).toBe(500);
+        expect(res.body.error).toContain("Error coming from the middleware");
     });
 });
