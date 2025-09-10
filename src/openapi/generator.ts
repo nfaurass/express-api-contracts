@@ -61,10 +61,16 @@ export function generateOpenApi<Contracts extends readonly Contract<any, any, an
         const responses: Record<string, any> = {};
         for (const status in contract.responses) {
             const schema = contract.responses[Number(status)];
-            responses[status] = {
-                description: `Response ${status}`,
-                content: {"application/json": {schema: sanitizeSchema(toJSONSchema(schema))}}
-            };
+            if (schema === null) {
+                responses[status] = {
+                    description: `Response ${status} (no content)`,
+                };
+            } else {
+                responses[status] = {
+                    description: `Response ${status}`,
+                    content: {"application/json": {schema: sanitizeSchema(toJSONSchema(schema))}}
+                };
+            }
         }
 
         // Assign path + method
