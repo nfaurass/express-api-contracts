@@ -94,8 +94,18 @@ export function registerContracts<Contracts extends readonly Contract<any, any, 
 
                 // Validate response
                 const schema = contract.responses[result.status];
-                if (!schema) throw new Error(`No schema defined for status ${result.status}`);
+
+                if (schema === undefined) throw new Error(`No schema defined for status ${result.status}`);
+
+                if (schema === null) {
+                    if ("body" in result && result.body !== undefined) throw new Error(`Response must not include a body for status ${result.status}`);
+                    return res.sendStatus(result.status);
+                }
+
+                if (!("body" in result)) throw new Error(`Response for status ${result.status} must include a body`);
+
                 const validatedBody = schema.safeParse(result.body);
+
                 if (validatedBody && !validatedBody.success) {
                     return res.status(500).json({
                         errors: validatedBody.error.issues.map((i: ZodIssue) => ({
