@@ -20,7 +20,7 @@ export function createContract<
     QUERY extends ZodObject<any> = ZodObject<any>,
     PARAMS extends ZodObject<any> = ZodObject<any>,
     RESPONSE extends Record<number, ResponseSchemaItem> = Record<number, ResponseSchemaItem>,
-    MIDDLEWARES extends readonly MiddlewareContract[] = readonly MiddlewareContract[]
+    MIDDLEWARES extends readonly MiddlewareContract[] = readonly MiddlewareContract[],
 >(contract: Contract<BODY, HEADERS, QUERY, PARAMS, RESPONSE, MIDDLEWARES>) {
     return contract;
 }

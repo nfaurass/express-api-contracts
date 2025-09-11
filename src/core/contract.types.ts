@@ -8,31 +8,27 @@ import type {Request, Response} from "express";
 export type RequestMethod = "post" | "put" | "patch" | "delete" | "get";
 
 /** @internal Extracts body type from a Zod schema */
-type BodyType<BODY extends ZodObject<any> | undefined> = BODY extends ZodObject<any>
-    ? ZInfer<BODY>
-    : undefined;
+type BodyType<BODY extends ZodObject<any> | undefined> =
+    BODY extends ZodObject<any> ? ZInfer<BODY> : undefined;
 
 /** @internal Extracts headers type from a Zod schema */
-type HeadersType<HEADERS extends ZodObject<any> | undefined> = HEADERS extends ZodObject<any>
-    ? ZInfer<HEADERS>
-    : undefined;
+type HeadersType<HEADERS extends ZodObject<any> | undefined> =
+    HEADERS extends ZodObject<any> ? ZInfer<HEADERS> : undefined;
 
 /** @internal Extracts query type from a Zod schema */
-type QueryType<QUERY extends ZodObject<any> | undefined> = QUERY extends ZodObject<any>
-    ? ZInfer<QUERY>
-    : undefined;
+type QueryType<QUERY extends ZodObject<any> | undefined> =
+    QUERY extends ZodObject<any> ? ZInfer<QUERY> : undefined;
 
 /** @internal Extracts params type from a Zod schema */
-type ParamsType<PARAMS extends ZodObject<any> | undefined> = PARAMS extends ZodObject<any>
-    ? ZInfer<PARAMS>
-    : undefined;
+type ParamsType<PARAMS extends ZodObject<any> | undefined> =
+    PARAMS extends ZodObject<any> ? ZInfer<PARAMS> : undefined;
 
 /** @internal Defines request schemas for body, headers, query, and params */
 type RequestSchema<
     BODY extends ZodObject<any>,
     HEADERS extends ZodObject<any>,
     QUERY extends ZodObject<any>,
-    PARAMS extends ZodObject<any>
+    PARAMS extends ZodObject<any>,
 > = {
     body?: BODY;
     headers?: HEADERS;
@@ -57,11 +53,12 @@ type ResponseUnion<RESPONSE extends ResponseSchema<any>> = {
 }[keyof RESPONSE & number];
 
 /** @internal Extracts middleware context type */
-type MiddlewareContext<M> = M extends MiddlewareContract<any, any, any, infer C>
-    ? C extends ZodObject<any>
-        ? ZInfer<C>
-        : unknown
-    : never;
+type MiddlewareContext<M> =
+    M extends MiddlewareContract<any, any, any, infer C>
+        ? C extends ZodObject<any>
+            ? ZInfer<C>
+            : unknown
+        : never;
 
 /** @internal Converts union types to intersection */
 type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void
@@ -91,7 +88,7 @@ export interface Contract<
     QUERY extends ZodObject<any> = ZodObject<any>,
     PARAMS extends ZodObject<any> = ZodObject<any>,
     RESPONSE extends Record<number, ResponseSchemaItem> = Record<number, ResponseSchemaItem>,
-    MIDDLEWARES extends readonly MiddlewareContract[] = readonly MiddlewareContract[]
+    MIDDLEWARES extends readonly MiddlewareContract[] = readonly MiddlewareContract[],
 > {
     /** Optional human-readable name for the endpoint */
     name?: string;

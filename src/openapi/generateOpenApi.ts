@@ -16,7 +16,7 @@ function sanitizeSchema(schema: any) {
  * @returns OpenAPI 3 specification object
  */
 export function generateOpenApi<
-    Contracts extends readonly Contract<any, any, any, any, any, any>[]
+    Contracts extends readonly Contract<any, any, any, any, any, any>[],
 >(contracts: Contracts, metadata: OpenApiMetadata): unknown {
     const paths: Record<string, any> = {};
 
@@ -27,10 +27,12 @@ export function generateOpenApi<
         // Generate request body schema if defined
         const requestBody = contract.request?.body
             ? {
-                content: {
-                    "application/json": {schema: sanitizeSchema(toJSONSchema(contract.request.body))}
-                }
-            }
+                  content: {
+                      "application/json": {
+                          schema: sanitizeSchema(toJSONSchema(contract.request.body)),
+                      },
+                  },
+              }
             : undefined;
 
         // Collect query parameters
@@ -43,7 +45,7 @@ export function generateOpenApi<
                     name: key,
                     in: "query",
                     required: !isOptional,
-                    schema: sanitizeSchema(toJSONSchema(querySchema[key]))
+                    schema: sanitizeSchema(toJSONSchema(querySchema[key])),
                 });
             }
         }
@@ -57,7 +59,7 @@ export function generateOpenApi<
                     name: key.toLowerCase(),
                     in: "header",
                     required: !isOptional,
-                    schema: sanitizeSchema(toJSONSchema(headerSchema[key]))
+                    schema: sanitizeSchema(toJSONSchema(headerSchema[key])),
                 });
             }
         }
@@ -68,14 +70,14 @@ export function generateOpenApi<
             const schema = contract.responses[Number(status)];
             if (schema === null) {
                 responses[status] = {
-                    description: `Response ${status} (no content)`
+                    description: `Response ${status} (no content)`,
                 };
             } else {
                 responses[status] = {
                     description: `Response ${status}`,
                     content: {
-                        "application/json": {schema: sanitizeSchema(toJSONSchema(schema))}
-                    }
+                        "application/json": {schema: sanitizeSchema(toJSONSchema(schema))},
+                    },
                 };
             }
         }
@@ -86,7 +88,7 @@ export function generateOpenApi<
             summary: contract.name || undefined,
             requestBody,
             responses,
-            parameters
+            parameters,
         };
     }
 

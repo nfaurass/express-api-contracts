@@ -14,7 +14,7 @@ export function createMiddleware<
     BODY extends ZodObject<any> = ZodObject<any>,
     HEADERS extends ZodObject<any> = ZodObject<any>,
     QUERY extends ZodObject<any> = ZodObject<any>,
-    CONTEXT extends ZodObject<any> = ZodObject<any>
+    CONTEXT extends ZodObject<any> = ZodObject<any>,
 >(middleware: MiddlewareContract<BODY, HEADERS, QUERY, CONTEXT>) {
     return middleware;
 }

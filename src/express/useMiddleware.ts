@@ -9,15 +9,15 @@ import type {NextFunction, Request, RequestHandler, Response} from "express";
  * @param middleware Middleware contract defining validation and handler
  * @returns Express `RequestHandler` function
  */
-export function useMiddleware<
-    Middleware extends MiddlewareContract<any, any, any, any>
->(middleware: Middleware): RequestHandler {
+export function useMiddleware<Middleware extends MiddlewareContract<any, any, any, any>>(
+    middleware: Middleware,
+): RequestHandler {
     return async (req: Request, res: Response, next: NextFunction) => {
         let finished = false; // Track if middleware completed
 
         try {
             // Collect validation errors
-            const errors: { path: string; message: string }[] = [];
+            const errors: {path: string; message: string}[] = [];
 
             // Validate request body
             if (middleware.request?.body) {
@@ -26,8 +26,8 @@ export function useMiddleware<
                     errors.push(
                         ...bodyResult.error.issues.map((i: ZodIssue) => ({
                             path: `body.${i.path.join(".")}`,
-                            message: i.message
-                        }))
+                            message: i.message,
+                        })),
                     );
                 }
             }
@@ -39,8 +39,8 @@ export function useMiddleware<
                     errors.push(
                         ...headersResult.error.issues.map((i: ZodIssue) => ({
                             path: `headers.${i.path.join(".")}`,
-                            message: i.message
-                        }))
+                            message: i.message,
+                        })),
                     );
                 }
             }
@@ -52,8 +52,8 @@ export function useMiddleware<
                     errors.push(
                         ...queryResult.error.issues.map((i: ZodIssue) => ({
                             path: `query.${i.path.join(".")}`,
-                            message: i.message
-                        }))
+                            message: i.message,
+                        })),
                     );
                 }
             }
@@ -81,10 +81,16 @@ export function useMiddleware<
                             success: (ctx?) => {
                                 try {
                                     finished = true;
-                                    (req as any).context = {...(req as any).context, ...(ctx || {})};
+                                    (req as any).context = {
+                                        ...(req as any).context,
+                                        ...(ctx || {}),
+                                    };
                                     next();
                                 } catch (err) {
-                                    const errorMessage = err instanceof Error ? err.message : "Internal Server Error";
+                                    const errorMessage =
+                                        err instanceof Error
+                                            ? err.message
+                                            : "Internal Server Error";
                                     console.error("Middleware handler error:", errorMessage);
                                     return res.status(500).json({error: errorMessage});
                                 }
@@ -95,7 +101,10 @@ export function useMiddleware<
                                     finished = true;
                                     return res.status(status).json(body);
                                 } catch (err) {
-                                    const errorMessage = err instanceof Error ? err.message : "Internal Server Error";
+                                    const errorMessage =
+                                        err instanceof Error
+                                            ? err.message
+                                            : "Internal Server Error";
                                     console.error("Middleware handler error:", errorMessage);
                                     return res.status(500).json({error: errorMessage});
                                 }
@@ -103,7 +112,8 @@ export function useMiddleware<
                         },
                     });
                 } catch (err: unknown) {
-                    const errorMessage = err instanceof Error ? err.message : "Internal Server Error";
+                    const errorMessage =
+                        err instanceof Error ? err.message : "Internal Server Error";
                     console.error("Middleware handler error:", errorMessage);
                     if (!finished) return res.status(500).json({error: errorMessage});
                 }

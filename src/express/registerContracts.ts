@@ -13,9 +13,10 @@ const registeredContractsMap = new WeakMap<Express, Set<string>>();
  * @param app Express application instance
  * @param contracts Array of contracts to register
  */
-export function registerContracts<
-    Contracts extends readonly Contract<any, any, any, any, any>[]
->(app: Express, contracts: Contracts) {
+export function registerContracts<Contracts extends readonly Contract<any, any, any, any, any>[]>(
+    app: Express,
+    contracts: Contracts,
+) {
     // Retrieve or initialize the set of already registered routes for this app
     let registered = registeredContractsMap.get(app);
     if (!registered) {
@@ -29,7 +30,7 @@ export function registerContracts<
         // Skip duplicate registrations
         if (registered.has(key)) {
             console.warn(
-                `[Warning] Contract already registered for [${contract.method}] ${contract.path}. Skipping duplicate.`
+                `[Warning] Contract already registered for [${contract.method}] ${contract.path}. Skipping duplicate.`,
             );
             continue;
         }
@@ -48,7 +49,7 @@ export function registerContracts<
             async (req: Request, res: Response) => {
                 try {
                     // Collect all validation errors
-                    const errors: { path: string; message: string }[] = [];
+                    const errors: {path: string; message: string}[] = [];
 
                     // Validate request body if schema is defined
                     if (contract.request?.body) {
@@ -57,8 +58,8 @@ export function registerContracts<
                             errors.push(
                                 ...bodyResult.error.issues.map((i: ZodIssue) => ({
                                     path: `body.${i.path.join(".")}`,
-                                    message: i.message
-                                }))
+                                    message: i.message,
+                                })),
                             );
                         }
                     }
@@ -70,8 +71,8 @@ export function registerContracts<
                             errors.push(
                                 ...headersResult.error.issues.map((i: ZodIssue) => ({
                                     path: `headers.${i.path.join(".")}`,
-                                    message: i.message
-                                }))
+                                    message: i.message,
+                                })),
                             );
                         }
                     }
@@ -83,8 +84,8 @@ export function registerContracts<
                             errors.push(
                                 ...queryResult.error.issues.map((i: ZodIssue) => ({
                                     path: `query.${i.path.join(".")}`,
-                                    message: i.message
-                                }))
+                                    message: i.message,
+                                })),
                             );
                         }
                     }
@@ -96,8 +97,8 @@ export function registerContracts<
                             errors.push(
                                 ...paramsResult.error.issues.map((i: ZodIssue) => ({
                                     path: `params.${i.path.join(".")}`,
-                                    message: i.message
-                                }))
+                                    message: i.message,
+                                })),
                             );
                         }
                     }
@@ -119,12 +120,14 @@ export function registerContracts<
                         params,
                         req,
                         res,
-                        context: (req as any).context ?? {}
+                        context: (req as any).context ?? {},
                     });
 
                     // Ensure the handler returned a valid response object with a status code
                     if (!result || !result.status)
-                        throw new Error("Handler did not return a valid response object with 'status'");
+                        throw new Error(
+                            "Handler did not return a valid response object with 'status'",
+                        );
 
                     // Get the response schema for this status code
                     const schema = contract.responses[result.status];
@@ -134,7 +137,9 @@ export function registerContracts<
                     // Handle responses with no body
                     if (schema === null) {
                         if ("body" in result && result.body !== undefined)
-                            throw new Error(`Response must not include a body for status ${result.status}`);
+                            throw new Error(
+                                `Response must not include a body for status ${result.status}`,
+                            );
                         return res.sendStatus(result.status);
                     }
 
@@ -150,8 +155,8 @@ export function registerContracts<
                         return res.status(500).json({
                             errors: validatedBody.error.issues.map((i: ZodIssue) => ({
                                 path: `response.${i.path.join(".")}`,
-                                message: i.message
-                            }))
+                                message: i.message,
+                            })),
                         });
                     }
 
@@ -163,8 +168,8 @@ export function registerContracts<
                         return res.status(500).json({
                             errors: err.issues.map((i: ZodIssue) => ({
                                 path: i.path.join("."),
-                                message: i.message
-                            }))
+                                message: i.message,
+                            })),
                         });
 
                     // Handle generic errors
@@ -172,7 +177,7 @@ export function registerContracts<
                         .status(500)
                         .json({error: err instanceof Error ? err.message : String(err)});
                 }
-            }
+            },
         );
     }
 }

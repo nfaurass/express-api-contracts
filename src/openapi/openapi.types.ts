@@ -8,6 +8,6 @@ export type OpenApiMetadata = {
     description?: string;
     summary?: string;
     termsOfService?: string;
-    contact?: { name?: string; url?: string; email?: string };
-    license?: { name: string; url?: string };
+    contact?: {name?: string; url?: string; email?: string};
+    license?: {name: string; url?: string};
 };
