@@ -3,8 +3,30 @@ import {toJSONSchema} from "zod";
 import {OpenApiMetadata} from "./openapi.types";
 
 /** @internal Removes `$schema` property from JSON Schema */
-function sanitizeSchema(schema: any) {
+function sanitizeSchema(schema: any): any {
     const {$schema, ...rest} = schema;
+    // Remove unsupported propertyNames
+    if (rest.type === "object") {
+        delete rest.propertyNames;
+        if (rest.properties) {
+            for (const key in rest.properties) {
+                rest.properties[key] = sanitizeSchema(rest.properties[key]);
+            }
+        }
+    }
+    // Convert anyOf: [string, null] to nullable: true
+    if (rest.anyOf && rest.anyOf.length === 2) {
+        const types = rest.anyOf.map((t: any) => t.type);
+        if (types.includes("string") && types.includes("null")) {
+            rest.type = "string";
+            rest.nullable = true;
+            delete rest.anyOf;
+        }
+    }
+    // Recursively sanitize arrays
+    if (rest.type === "array" && rest.items) {
+        rest.items = sanitizeSchema(rest.items);
+    }
     return rest;
 }
 
