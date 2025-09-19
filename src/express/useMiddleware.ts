@@ -1,7 +1,7 @@
 import type {$ZodIssue as ZodIssue} from "zod/v4/core";
-import {ZodError} from "zod";
 import type {MiddlewareContract} from "../core/middleware.types";
 import type {NextFunction, Request, RequestHandler, Response} from "express";
+import {ZodError} from "zod";
 
 /**
  * @internal Converts a `MiddlewareContract` into an Express-compatible request handler.

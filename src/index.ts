@@ -8,7 +8,7 @@
  * - `generateOpenApi`: Generate OpenAPI 3 spec from contracts.
  */
 
-export {createContract} from "./core/createContract";
-export {createMiddleware} from "./core/createMiddleware";
-export {registerContracts} from "./express/registerContracts";
-export {generateOpenApi} from "./openapi/generateOpenApi";
+export {createContract} from "./core/createContract.js";
+export {createMiddleware} from "./core/createMiddleware.js";
+export {registerContracts} from "./express/registerContracts.js";
+export {generateOpenApi} from "./openapi/generateOpenApi.js";

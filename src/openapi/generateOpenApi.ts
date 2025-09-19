@@ -1,6 +1,6 @@
 import type {Contract, RequestMethod} from "../core/contract.types";
+import type {OpenApiMetadata} from "./openapi.types";
 import {toJSONSchema} from "zod";
-import {OpenApiMetadata} from "./openapi.types";
 
 /** @internal Removes `$schema` property from JSON Schema */
 function sanitizeSchema(schema: any): any {

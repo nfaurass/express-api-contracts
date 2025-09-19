@@ -1,8 +1,8 @@
 import type {$ZodIssue as ZodIssue} from "zod/v4/core";
-import {ZodError} from "zod";
 import type {Express, Request, Response} from "express";
 import type {Contract, RequestMethod} from "../core/contract.types";
-import {useMiddleware} from "./useMiddleware";
+import {ZodError} from "zod";
+import {useMiddleware} from "./useMiddleware.js";
 
 /** @internal Tracks registered contracts per Express app instance to prevent duplicates */
 const registeredContractsMap = new WeakMap<Express, Set<string>>();
